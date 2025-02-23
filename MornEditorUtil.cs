@@ -1,11 +1,14 @@
 using System;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
+
+[assembly: InternalsVisibleTo("MornEditor.Editor")]
 namespace MornEditor
 {
     public static class MornEditorUtil
