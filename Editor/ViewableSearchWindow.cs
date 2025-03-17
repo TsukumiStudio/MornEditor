@@ -17,7 +17,7 @@ namespace MornEditor
         private const float MinSize = 30f;
         private const float MaxSize = 200f;
         private const float DefaultSize = 60f;
-        private const string SizeKey = "SpriteSOSearchWindow.SizeKey";
+        private const string SizeKey = "ViewableSearchWindow.SizeKey";
         private float _imageSize;
 
         public static void ShowWindow(SerializedProperty property, Type targetType)
