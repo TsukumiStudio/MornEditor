@@ -64,7 +64,7 @@ namespace MornEditor
                 using (new GUILayout.HorizontalScope())
                 {
                     GUILayout.Space(40 * totalIndent);
-                    using (new GUILayout.VerticalScope(GUI.skin.box))
+                    using (new GUILayout.VerticalScope())
                     {
                         if (_isFoldout || isRoot)
                         {
