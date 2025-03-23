@@ -51,7 +51,7 @@ namespace MornEditor
                 GUILayout.BeginVertical();
             }
 
-            action();
+            action?.Invoke();
             if (option.IsIndent)
             {
                 GUILayout.EndVertical();
