@@ -79,7 +79,7 @@ namespace MornEditor
                                 var pathFromPrefix = path.Substring(_originalPath.Length);
                                 IndentButton(totalIndent, pathFromPrefix, () =>
                                 {
-                                    _tree.NodeOnGUI(child);
+                                    _tree.NodeClicked(child);
                                 });
                             }
                         }
@@ -109,7 +109,7 @@ namespace MornEditor
         }
 
         protected abstract string NodeToPath(T node);
-        protected abstract void NodeOnGUI(T node);
+        protected abstract void NodeClicked(T node);
 
         private static bool FoldOutButton(bool isFoldout, string text)
         {
