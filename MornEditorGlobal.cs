@@ -1,12 +1,10 @@
 using System.Runtime.CompilerServices;
 using MornGlobal;
-using UnityEngine;
 
 [assembly: InternalsVisibleTo("MornEditor.Editor")]
 namespace MornEditor
 {
-    [CreateAssetMenu(fileName = nameof(MornEditorGlobal), menuName = "Morn/" + nameof(MornEditorGlobal))]
-    internal sealed class MornEditorGlobal : MornGlobalBase<MornEditorGlobal>
+    internal sealed class MornEditorGlobal : MornGlobalPureBase<MornEditorGlobal>
     {
         protected override string ModuleName => nameof(MornEditor);
 
