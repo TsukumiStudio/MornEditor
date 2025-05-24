@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace MornEditor
 {
@@ -18,10 +17,10 @@ namespace MornEditor
             private readonly string _folderName;
             private readonly Dictionary<string, MornEditorNode> _childNodes = new();
             private readonly List<T> _childList = new();
-            private bool isRoot => _parentNode == null;
+            private bool IsRoot => _parentNode == null;
             private bool _isFoldout;
             private int _indent;
-            private int totalIndent => _parentNode?.totalIndent + _indent ?? _indent;
+            private int TotalIndent => _parentNode?.TotalIndent + _indent ?? _indent;
 
             public MornEditorNode(MornEditorTreeBase<T> tree, MornEditorNode parent, string originalPath)
             {
@@ -59,7 +58,7 @@ namespace MornEditor
 
             public void OnGUI()
             {
-                if (!isRoot)
+                if (!IsRoot)
                 {
                     _isFoldout = FoldOutButton(_isFoldout, _folderName);
                     _indent++;
@@ -67,10 +66,10 @@ namespace MornEditor
 
                 using (new GUILayout.HorizontalScope())
                 {
-                    GUILayout.Space(40 * totalIndent);
+                    GUILayout.Space(40 * TotalIndent);
                     using (new GUILayout.VerticalScope())
                     {
-                        if (_isFoldout || isRoot)
+                        if (_isFoldout || IsRoot)
                         {
                             foreach (var sceneNode in _childNodes.Values)
                             {
@@ -81,7 +80,7 @@ namespace MornEditor
                             {
                                 var path = _tree.NodeToPath(child);
                                 var pathFromPrefix = path.Substring(_originalPath.Length);
-                                IndentButton(totalIndent, pathFromPrefix, () =>
+                                IndentButton(TotalIndent, pathFromPrefix, () =>
                                 {
                                     _tree.NodeClicked(child);
                                 });
@@ -90,7 +89,7 @@ namespace MornEditor
                     }
                 }
 
-                if (!isRoot)
+                if (!IsRoot)
                 {
                     _indent--;
                 }
