@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace MornEditor
 {
-    [CustomEditor(typeof(MonoBehaviour), true)] // すべてのMonoBehaviourに適用
-    public sealed class MonoBehaviourEditor : Editor
+    [CustomEditor(typeof(ScriptableObject), true)] // すべてのMonoBehaviourに適用
+    public sealed class ScriptableObjectEditor : Editor
     {
         public override void OnInspectorGUI()
         {
