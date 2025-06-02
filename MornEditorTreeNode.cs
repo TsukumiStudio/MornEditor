@@ -29,6 +29,12 @@ namespace MornEditor
                 _originalPath = originalPath;
                 _folderName = originalPath.Substring(0, originalPath.Length - 1).Split('/').Last();
             }
+            
+            public void Clear()
+            {
+                _childNodes.Clear();
+                _childList.Clear();
+            }
 
             public void Add(T target)
             {
@@ -100,10 +106,23 @@ namespace MornEditor
         {
             _rootNode = new MornEditorNode(this, null, originalPath);
         }
+        
+        public void Clear()
+        {
+            _rootNode.Clear();
+        }
 
         public void Add(T node)
         {
             _rootNode.Add(node);
+        }
+        
+        public void AddRange(IEnumerable<T> nodes)
+        {
+            foreach (var node in nodes)
+            {
+                _rootNode.Add(node);
+            }
         }
 
         public void OnGUI()
