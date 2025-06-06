@@ -27,7 +27,7 @@ namespace MornEditor
                 _tree = tree;
                 _parentNode = parent;
                 _originalPath = originalPath;
-                _folderName = originalPath.Substring(0, originalPath.Length - 1).Split('/').Last();
+                _folderName = originalPath.Contains('/') ? originalPath.Substring(0, originalPath.Length - 1).Split('/').Last() : "";
             }
             
             public void Clear()
@@ -39,7 +39,7 @@ namespace MornEditor
             public void Add(T target)
             {
                 var path = _tree.NodeToPath(target);
-                if (!path.StartsWith(_originalPath))
+                if (!string.IsNullOrEmpty(_originalPath) && !path.StartsWith(_originalPath))
                 {
                     MornEditorGlobal.LogWarning($"パス[{path}]は、指定したパス[{_originalPath}]で始まっていません。");
                     return;
