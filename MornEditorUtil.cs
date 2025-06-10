@@ -73,12 +73,25 @@ namespace MornEditor
         internal static bool TryGetBool(string propertyName, SerializedProperty property, out bool value)
         {
             var targetObject = property.serializedObject.targetObject;
-            var propertyInfo = targetObject.GetType().GetProperty(
+            var targetType = targetObject.GetType();
+            
+            // まずプロパティを探す
+            var propertyInfo = targetType.GetProperty(
                 propertyName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (propertyInfo != null && propertyInfo.GetValue(targetObject) is bool boolValue)
+            if (propertyInfo != null && propertyInfo.GetValue(targetObject) is bool boolPropertyValue)
             {
-                value = boolValue;
+                value = boolPropertyValue;
+                return true;
+            }
+            
+            // プロパティが見つからなければフィールドを探す
+            var fieldInfo = targetType.GetField(
+                propertyName,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (fieldInfo != null && fieldInfo.GetValue(targetObject) is bool boolFieldValue)
+            {
+                value = boolFieldValue;
                 return true;
             }
 
