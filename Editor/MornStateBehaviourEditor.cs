@@ -1,10 +1,10 @@
+using Arbor;
 using UnityEditor;
-using UnityEngine;
 
 namespace MornEditor
 {
-    [CustomEditor(typeof(MonoBehaviour), true)] // すべてのMonoBehaviourに適用
-    internal sealed class MonoBehaviourEditor : Editor
+    [CustomEditor(typeof(StateBehaviour), true)] // すべてのStateBehaviourに適用
+    internal sealed class StateBehaviourEditor : Editor
     {
         public override void OnInspectorGUI()
         {
