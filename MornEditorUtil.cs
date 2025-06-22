@@ -184,7 +184,8 @@ namespace MornEditor
                 var buttonAttribute = method.GetCustomAttribute<ButtonAttribute>();
                 if (buttonAttribute != null)
                 {
-                    if (GUILayout.Button(method.Name))
+                    var buttonName = string.IsNullOrEmpty(buttonAttribute.Name) ? method.Name : buttonAttribute.Name;
+                    if (GUILayout.Button(buttonName))
                     {
                         method.Invoke(target, null);
                     }
