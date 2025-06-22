@@ -72,14 +72,21 @@ namespace MornEditor
 #if UNITY_EDITOR
         internal static bool TryGetBool(string propertyName, SerializedProperty property, out bool value)
         {
-            var targetObject = property.serializedObject.targetObject;
-            var targetType = targetObject.GetType();
+            // ネストされたプロパティの実際の値を取得するために、プロパティパスを辿る
+            var actualObject = GetActualObjectForProperty(property);
+            if (actualObject == null)
+            {
+                value = false;
+                return false;
+            }
+            
+            var targetType = actualObject.GetType();
             
             // まずプロパティを探す
             var propertyInfo = targetType.GetProperty(
                 propertyName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (propertyInfo != null && propertyInfo.GetValue(targetObject) is bool boolPropertyValue)
+            if (propertyInfo != null && propertyInfo.GetValue(actualObject) is bool boolPropertyValue)
             {
                 value = boolPropertyValue;
                 return true;
@@ -89,7 +96,7 @@ namespace MornEditor
             var fieldInfo = targetType.GetField(
                 propertyName,
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            if (fieldInfo != null && fieldInfo.GetValue(targetObject) is bool boolFieldValue)
+            if (fieldInfo != null && fieldInfo.GetValue(actualObject) is bool boolFieldValue)
             {
                 value = boolFieldValue;
                 return true;
@@ -97,6 +104,47 @@ namespace MornEditor
 
             value = false;
             return false;
+        }
+        
+        private static object GetActualObjectForProperty(SerializedProperty property)
+        {
+            var path = property.propertyPath;
+            var targetObject = property.serializedObject.targetObject;
+            
+            // パスを'.'で分割して、各階層を辿る
+            var pathParts = path.Split('.');
+            object currentObject = targetObject;
+            
+            // 最後の要素は現在のプロパティ自体なので、その一つ前まで辿る
+            for (var i = 0; i < pathParts.Length - 1; i++)
+            {
+                var part = pathParts[i];
+                
+                // Array要素の場合の処理
+                if (part == "Array" && i + 1 < pathParts.Length && pathParts[i + 1].StartsWith("data["))
+                {
+                    // Arrayの場合は次のdata[n]も含めて処理
+                    i++; // data[n]をスキップ
+                    continue;
+                }
+                
+                // 現在のオブジェクトから次のフィールドを取得
+                var type = currentObject.GetType();
+                var field = type.GetField(part, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                
+                if (field == null)
+                {
+                    return null;
+                }
+                
+                currentObject = field.GetValue(currentObject);
+                if (currentObject == null)
+                {
+                    return null;
+                }
+            }
+            
+            return currentObject;
         }
 
         public static void OnInspectorGUI(Object target, SerializedObject serializedObject)
