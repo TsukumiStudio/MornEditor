@@ -4,11 +4,21 @@ namespace MornEditor
 {
     public sealed class HideIfAttribute : PropertyAttribute
     {
-        public string PropertyName { get; }
+        public string[] PropertyNames { get; }
 
         public HideIfAttribute(string propertyName)
         {
-            PropertyName = propertyName;
+            PropertyNames = new[] { propertyName };
+        }
+        
+        public HideIfAttribute(string propertyName1, string propertyName2)
+        {
+            PropertyNames = new[] { propertyName1, propertyName2 };
+        }
+        
+        public HideIfAttribute(params string[] propertyNames)
+        {
+            PropertyNames = propertyNames;
         }
     }
 }

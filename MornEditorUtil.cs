@@ -208,21 +208,71 @@ namespace MornEditor
             if (fieldInfo != null)
             {
                 var showIfAttribute = fieldInfo.GetCustomAttribute<ShowIfAttribute>();
-                var propertyName = showIfAttribute?.PropertyName;
-                if (showIfAttribute != null && TryGetBool(propertyName, property, out var show) && !show)
+                if (showIfAttribute != null)
                 {
-                    return;
+                    var shouldShow = true;
+                    foreach (var propertyName in showIfAttribute.PropertyNames)
+                    {
+                        if (!TryGetBool(propertyName, property, out var show) || !show)
+                        {
+                            shouldShow = false;
+                            break;
+                        }
+                    }
+                    if (!shouldShow)
+                    {
+                        return;
+                    }
                 }
 
                 var hideIf = fieldInfo.GetCustomAttribute<HideIfAttribute>();
-                propertyName = hideIf?.PropertyName;
-                if (hideIf != null && TryGetBool(propertyName, property, out var hide) && hide)
+                if (hideIf != null)
                 {
-                    return;
+                    foreach (var propertyName in hideIf.PropertyNames)
+                    {
+                        if (TryGetBool(propertyName, property, out var hide) && hide)
+                        {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            var previousEnabled = GUI.enabled;
+            if (fieldInfo != null)
+            {
+                var enableIfAttribute = fieldInfo.GetCustomAttribute<EnableIfAttribute>();
+                if (enableIfAttribute != null)
+                {
+                    var shouldEnable = true;
+                    foreach (var propertyName in enableIfAttribute.PropertyNames)
+                    {
+                        if (!TryGetBool(propertyName, property, out var enable) || !enable)
+                        {
+                            shouldEnable = false;
+                            break;
+                        }
+                    }
+                    GUI.enabled = shouldEnable;
+                }
+
+                var disableIfAttribute = fieldInfo.GetCustomAttribute<DisableIfAttribute>();
+                if (disableIfAttribute != null)
+                {
+                    foreach (var propertyName in disableIfAttribute.PropertyNames)
+                    {
+                        if (TryGetBool(propertyName, property, out var disable) && disable)
+                        {
+                            GUI.enabled = false;
+                            break;
+                        }
+                    }
                 }
             }
 
             EditorGUILayout.PropertyField(property, true);
+            
+            GUI.enabled = previousEnabled;
         }
 #endif
     }

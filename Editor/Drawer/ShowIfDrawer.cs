@@ -11,7 +11,7 @@ namespace MornEditor
         {
             var showIfAttribute = (ShowIfAttribute)attribute;
             
-            if (MornEditorUtil.TryGetBool(showIfAttribute.PropertyName, property, out var show) && show)
+            if (ShouldShow(showIfAttribute, property))
             {
                 EditorGUI.PropertyField(position, property, label, true);
             }
@@ -21,12 +21,25 @@ namespace MornEditor
         {
             var showIfAttribute = (ShowIfAttribute)attribute;
             
-            if (MornEditorUtil.TryGetBool(showIfAttribute.PropertyName, property, out var show) && show)
+            if (ShouldShow(showIfAttribute, property))
             {
                 return EditorGUI.GetPropertyHeight(property, label, true);
             }
             
             return 0f;
+        }
+        
+        private bool ShouldShow(ShowIfAttribute showIfAttribute, SerializedProperty property)
+        {
+            foreach (var propertyName in showIfAttribute.PropertyNames)
+            {
+                if (!MornEditorUtil.TryGetBool(propertyName, property, out var show) || !show)
+                {
+                    return false;
+                }
+            }
+            
+            return true;
         }
     }
 }
