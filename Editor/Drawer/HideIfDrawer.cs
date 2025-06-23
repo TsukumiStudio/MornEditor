@@ -11,7 +11,7 @@ namespace MornEditor
         {
             var hideIfAttribute = (HideIfAttribute)attribute;
             
-            if (!MornEditorUtil.TryGetBool(hideIfAttribute.PropertyName, property, out var hide) || !hide)
+            if (!ShouldHide(hideIfAttribute, property))
             {
                 EditorGUI.PropertyField(position, property, label, true);
             }
@@ -21,12 +21,25 @@ namespace MornEditor
         {
             var hideIfAttribute = (HideIfAttribute)attribute;
             
-            if (!MornEditorUtil.TryGetBool(hideIfAttribute.PropertyName, property, out var hide) || !hide)
+            if (!ShouldHide(hideIfAttribute, property))
             {
                 return EditorGUI.GetPropertyHeight(property, label, true);
             }
             
             return 0f;
+        }
+        
+        private bool ShouldHide(HideIfAttribute hideIfAttribute, SerializedProperty property)
+        {
+            foreach (var propertyName in hideIfAttribute.PropertyNames)
+            {
+                if (MornEditorUtil.TryGetBool(propertyName, property, out var hide) && hide)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
         }
     }
 }

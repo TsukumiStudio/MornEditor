@@ -8,8 +8,9 @@ namespace MornEditor
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var propertyName = ((DisableIfAttribute)attribute).PropertyName;
-            if (MornEditorUtil.TryGetBool(propertyName, property, out var boolValue) && !boolValue)
+            var enableIfAttribute = (EnableIfAttribute)attribute;
+            
+            if (ShouldDisable(enableIfAttribute, property))
             {
                 EditorGUI.BeginDisabledGroup(true);
                 EditorGUI.PropertyField(position, property, label, true);
@@ -19,6 +20,19 @@ namespace MornEditor
             {
                 EditorGUI.PropertyField(position, property, label, true);
             }
+        }
+        
+        private bool ShouldDisable(EnableIfAttribute enableIfAttribute, SerializedProperty property)
+        {
+            foreach (var propertyName in enableIfAttribute.PropertyNames)
+            {
+                if (!MornEditorUtil.TryGetBool(propertyName, property, out var show) || !show)
+                {
+                    return true;
+                }
+            }
+            
+            return false;
         }
     }
 }
