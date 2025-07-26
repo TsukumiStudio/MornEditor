@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -10,6 +11,27 @@ namespace MornEditor
     public static class MornEditorUtil
     {
 #if UNITY_EDITOR
+        /// <summary>現在MornEditorUtilで処理中のAttributeを保持（二重処理防止用）</summary>
+        private static readonly HashSet<object> ProcessingAttributes = new HashSet<object>();
+        
+        /// <summary>MornEditorUtilで処理中のAttributeかチェック</summary>
+        public static bool IsProcessingAttribute(object attribute)
+        {
+            return ProcessingAttributes.Contains(attribute);
+        }
+        
+        /// <summary>プロパティを描画（配列の場合も含めて適切に処理）</summary>
+        public static void DrawPropertyField(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.PropertyField(position, property, label, true);
+        }
+        
+        /// <summary>プロパティの高さを取得（配列の場合も含めて適切に処理）</summary>
+        public static float GetPropertyFieldHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
+        }
+        
         internal static bool TryGetBool(string propertyName, SerializedProperty property, out bool value)
         {
             // ネストされたプロパティの実際の値を取得するために、プロパティパスを辿る
@@ -145,100 +167,159 @@ namespace MornEditor
             var fieldInfo = targetType.GetField(
                 property.name,
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (fieldInfo != null)
-            {
-                var showIfAttribute = fieldInfo.GetCustomAttribute<ShowIfAttribute>();
-                if (showIfAttribute != null)
-                {
-                    var shouldShow = true;
-                    foreach (var propertyName in showIfAttribute.PropertyNames)
-                    {
-                        if (!TryGetBool(propertyName, property, out var show) || !show)
-                        {
-                            shouldShow = false;
-                            break;
-                        }
-                    }
-                    if (!shouldShow)
-                    {
-                        return;
-                    }
-                }
-
-                var hideIf = fieldInfo.GetCustomAttribute<HideIfAttribute>();
-                if (hideIf != null)
-                {
-                    foreach (var propertyName in hideIf.PropertyNames)
-                    {
-                        if (TryGetBool(propertyName, property, out var hide) && hide)
-                        {
-                            return;
-                        }
-                    }
-                }
-            }
-
-            var previousEnabled = GUI.enabled;
-            if (fieldInfo != null)
-            {
-                var enableIfAttribute = fieldInfo.GetCustomAttribute<EnableIfAttribute>();
-                if (enableIfAttribute != null)
-                {
-                    var shouldEnable = true;
-                    foreach (var propertyName in enableIfAttribute.PropertyNames)
-                    {
-                        if (!TryGetBool(propertyName, property, out var enable) || !enable)
-                        {
-                            shouldEnable = false;
-                            break;
-                        }
-                    }
-                    GUI.enabled = shouldEnable;
-                }
-
-                var disableIfAttribute = fieldInfo.GetCustomAttribute<DisableIfAttribute>();
-                if (disableIfAttribute != null)
-                {
-                    foreach (var propertyName in disableIfAttribute.PropertyNames)
-                    {
-                        if (TryGetBool(propertyName, property, out var disable) && disable)
-                        {
-                            GUI.enabled = false;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // 配列/リストプロパティの場合、ドラッグ&ドロップを処理
-            if (property.isArray && property.propertyType != SerializedPropertyType.String)
-            {
-                DrawArrayPropertyWithDragAndDrop(property);
-            }
-            else
+            
+            if (fieldInfo == null)
             {
                 EditorGUILayout.PropertyField(property, true);
+                return;
             }
             
-            GUI.enabled = previousEnabled;
+            // 各Attributeを取得
+            var showIfAttribute = fieldInfo.GetCustomAttribute<ShowIfAttribute>();
+            var hideIfAttribute = fieldInfo.GetCustomAttribute<HideIfAttribute>();
+            var enableIfAttribute = fieldInfo.GetCustomAttribute<EnableIfAttribute>();
+            var disableIfAttribute = fieldInfo.GetCustomAttribute<DisableIfAttribute>();
+            
+            // 処理中のAttributeとして登録
+            if (showIfAttribute != null) ProcessingAttributes.Add(showIfAttribute);
+            if (hideIfAttribute != null) ProcessingAttributes.Add(hideIfAttribute);
+            if (enableIfAttribute != null) ProcessingAttributes.Add(enableIfAttribute);
+            if (disableIfAttribute != null) ProcessingAttributes.Add(disableIfAttribute);
+            
+            try
+            {
+                // 表示/非表示の判定
+                if (!CheckVisibility(fieldInfo, property))
+                {
+                    return;
+                }
+                
+                // 有効/無効の判定と描画
+                var isEnabled = CheckEnabled(fieldInfo, property);
+                using (new EditorGUI.DisabledScope(!isEnabled))
+                {
+                    EditorGUILayout.PropertyField(property, true);
+                }
+            }
+            finally
+            {
+                // 処理が終わったらAttributeを削除
+                if (showIfAttribute != null) ProcessingAttributes.Remove(showIfAttribute);
+                if (hideIfAttribute != null) ProcessingAttributes.Remove(hideIfAttribute);
+                if (enableIfAttribute != null) ProcessingAttributes.Remove(enableIfAttribute);
+                if (disableIfAttribute != null) ProcessingAttributes.Remove(disableIfAttribute);
+            }
+        }
+        
+        
+        /// <summary>ShowIf/HideIfAttributeに基づいてプロパティの表示可否を判定</summary>
+        private static bool CheckVisibility(FieldInfo fieldInfo, SerializedProperty property)
+        {
+            // ShowIfAttributeの処理
+            var showIfAttribute = fieldInfo.GetCustomAttribute<ShowIfAttribute>();
+            if (showIfAttribute != null && !EvaluateShowIfCondition(showIfAttribute, property))
+            {
+                return false;
+            }
+            
+            // HideIfAttributeの処理
+            var hideIfAttribute = fieldInfo.GetCustomAttribute<HideIfAttribute>();
+            if (hideIfAttribute != null && EvaluateHideIfCondition(hideIfAttribute, property))
+            {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        /// <summary>EnableIf/DisableIfAttributeに基づいてプロパティの有効状態を判定</summary>
+        private static bool CheckEnabled(FieldInfo fieldInfo, SerializedProperty property)
+        {
+            // EnableIfAttributeの処理
+            var enableIfAttribute = fieldInfo.GetCustomAttribute<EnableIfAttribute>();
+            if (enableIfAttribute != null && !EvaluateEnableIfCondition(enableIfAttribute, property))
+            {
+                return false;
+            }
+            
+            // DisableIfAttributeの処理
+            var disableIfAttribute = fieldInfo.GetCustomAttribute<DisableIfAttribute>();
+            if (disableIfAttribute != null && EvaluateDisableIfCondition(disableIfAttribute, property))
+            {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        /// <summary>ShowIfAttributeの条件を評価</summary>
+        public static bool EvaluateShowIfCondition(ShowIfAttribute attribute, SerializedProperty property)
+        {
+            return EvaluateConditions(attribute.PropertyNames, property, true);
+        }
+        
+        /// <summary>HideIfAttributeの条件を評価</summary>
+        public static bool EvaluateHideIfCondition(HideIfAttribute attribute, SerializedProperty property)
+        {
+            return EvaluateConditions(attribute.PropertyNames, property, false);
+        }
+        
+        /// <summary>EnableIfAttributeの条件を評価</summary>
+        public static bool EvaluateEnableIfCondition(EnableIfAttribute attribute, SerializedProperty property)
+        {
+            return EvaluateConditions(attribute.PropertyNames, property, true);
+        }
+        
+        /// <summary>DisableIfAttributeの条件を評価</summary>
+        public static bool EvaluateDisableIfCondition(DisableIfAttribute attribute, SerializedProperty property)
+        {
+            return EvaluateConditions(attribute.PropertyNames, property, false);
+        }
+        
+        /// <summary>条件を評価（AND条件）</summary>
+        /// <param name="propertyNames">評価するプロパティ名の配列</param>
+        /// <param name="property">現在のプロパティ</param>
+        /// <param name="requireAll">すべてtrueである必要があるか（true）、いずれかtrueで良いか（false）</param>
+        private static bool EvaluateConditions(string[] propertyNames, SerializedProperty property, bool requireAll)
+        {
+            foreach (var propertyName in propertyNames)
+            {
+                if (!TryGetBool(propertyName, property, out var value))
+                {
+                    // プロパティが見つからない場合はfalseとして扱う
+                    value = false;
+                }
+                
+                if (requireAll && !value)
+                {
+                    // AND条件で一つでもfalseならfalse
+                    return false;
+                }
+                else if (!requireAll && value)
+                {
+                    // OR条件で一つでもtrueならtrue
+                    return true;
+                }
+            }
+            
+            // AND条件の場合はすべてtrue、OR条件の場合はすべてfalse
+            return requireAll;
         }
 
         private static void DrawArrayPropertyWithDragAndDrop(SerializedProperty property)
         {
-            // BeginPropertyを使用してPropertyFieldの描画位置を正確に取得
-            var rect = EditorGUILayout.GetControlRect(true, EditorGUI.GetPropertyHeight(property, true));
+            // まず通常のPropertyFieldを描画（EditorGUILayoutを使用）
+            EditorGUILayout.PropertyField(property, true);
             
-            // ヘッダー部分のRectを計算（プロパティの最初の行）
-            var headerRect = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+            // ドラッグ&ドロップのための領域を取得
+            var lastRect = GUILayoutUtility.GetLastRect();
+            var headerRect = new Rect(lastRect.x, lastRect.y, lastRect.width, EditorGUIUtility.singleLineHeight);
             
-            // ドラッグ&ドロップの処理を先に行う（イベントが消費される前に）
+            // ドラッグ&ドロップの処理
             if (property.arraySize >= 0 || property.arraySize == -1) // 空の配列も受け付ける
             {
                 HandleArrayDragAndDrop(property, headerRect);
             }
-            
-            // 通常のPropertyFieldを描画
-            EditorGUI.PropertyField(rect, property, true);
         }
 
         private static void HandleArrayDragAndDrop(SerializedProperty arrayProperty, Rect dropArea)

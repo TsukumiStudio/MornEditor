@@ -11,7 +11,14 @@ namespace MornEditor
         {
             var hideIfAttribute = (HideIfAttribute)attribute;
             
-            if (!ShouldHide(hideIfAttribute, property))
+            // MornEditorUtilで処理中の場合はPropertyDrawerでは処理しない
+            if (MornEditorUtil.IsProcessingAttribute(hideIfAttribute))
+            {
+                EditorGUI.PropertyField(position, property, label, true);
+                return;
+            }
+            
+            if (!MornEditorUtil.EvaluateHideIfCondition(hideIfAttribute, property))
             {
                 EditorGUI.PropertyField(position, property, label, true);
             }
@@ -21,25 +28,18 @@ namespace MornEditor
         {
             var hideIfAttribute = (HideIfAttribute)attribute;
             
-            if (!ShouldHide(hideIfAttribute, property))
+            // MornEditorUtilで処理中の場合はデフォルトの高さを返す
+            if (MornEditorUtil.IsProcessingAttribute(hideIfAttribute))
             {
                 return EditorGUI.GetPropertyHeight(property, label, true);
             }
             
-            return 0f;
-        }
-        
-        private bool ShouldHide(HideIfAttribute hideIfAttribute, SerializedProperty property)
-        {
-            foreach (var propertyName in hideIfAttribute.PropertyNames)
+            if (!MornEditorUtil.EvaluateHideIfCondition(hideIfAttribute, property))
             {
-                if (MornEditorUtil.TryGetBool(propertyName, property, out var hide) && hide)
-                {
-                    return true;
-                }
+                return EditorGUI.GetPropertyHeight(property, label, true);
             }
             
-            return false;
+            return -EditorGUIUtility.standardVerticalSpacing;
         }
     }
 }

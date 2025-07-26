@@ -1,38 +1,36 @@
-﻿using UnityEditor;
+#if UNITY_EDITOR
+using UnityEditor;
 using UnityEngine;
 
 namespace MornEditor
 {
+    /// <summary>DisableIfAttributeのPropertyDrawer（MonoBehaviour/ScriptableObject以外で使用）</summary>
     [CustomPropertyDrawer(typeof(DisableIfAttribute))]
-    internal sealed class DisableIfDrawer : PropertyDrawer
+    public class DisableIfDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var disableIfAttribute = (DisableIfAttribute)attribute;
             
-            if (ShouldDisable(disableIfAttribute, property))
+            // MornEditorUtilで処理中の場合はPropertyDrawerでは処理しない
+            if (MornEditorUtil.IsProcessingAttribute(disableIfAttribute))
             {
-                EditorGUI.BeginDisabledGroup(true);
                 EditorGUI.PropertyField(position, property, label, true);
-                EditorGUI.EndDisabledGroup();
+                return;
             }
-            else
+            
+            var shouldDisable = MornEditorUtil.EvaluateDisableIfCondition(disableIfAttribute, property);
+            
+            using (new EditorGUI.DisabledScope(shouldDisable))
             {
                 EditorGUI.PropertyField(position, property, label, true);
             }
         }
-        
-        private bool ShouldDisable(DisableIfAttribute disableIfAttribute, SerializedProperty property)
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            foreach (var propertyName in disableIfAttribute.PropertyNames)
-            {
-                if (MornEditorUtil.TryGetBool(propertyName, property, out var show) && show)
-                {
-                    return true;
-                }
-            }
-            
-            return false;
+            return EditorGUI.GetPropertyHeight(property, label, true);
         }
     }
 }
+#endif

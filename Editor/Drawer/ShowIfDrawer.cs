@@ -11,7 +11,14 @@ namespace MornEditor
         {
             var showIfAttribute = (ShowIfAttribute)attribute;
             
-            if (ShouldShow(showIfAttribute, property))
+            // MornEditorUtilで処理中の場合はPropertyDrawerでは処理しない
+            if (MornEditorUtil.IsProcessingAttribute(showIfAttribute))
+            {
+                EditorGUI.PropertyField(position, property, label, true);
+                return;
+            }
+            
+            if (MornEditorUtil.EvaluateShowIfCondition(showIfAttribute, property))
             {
                 EditorGUI.PropertyField(position, property, label, true);
             }
@@ -21,25 +28,18 @@ namespace MornEditor
         {
             var showIfAttribute = (ShowIfAttribute)attribute;
             
-            if (ShouldShow(showIfAttribute, property))
+            // MornEditorUtilで処理中の場合はデフォルトの高さを返す
+            if (MornEditorUtil.IsProcessingAttribute(showIfAttribute))
             {
                 return EditorGUI.GetPropertyHeight(property, label, true);
             }
             
-            return 0f;
-        }
-        
-        private bool ShouldShow(ShowIfAttribute showIfAttribute, SerializedProperty property)
-        {
-            foreach (var propertyName in showIfAttribute.PropertyNames)
+            if (MornEditorUtil.EvaluateShowIfCondition(showIfAttribute, property))
             {
-                if (!MornEditorUtil.TryGetBool(propertyName, property, out var show) || !show)
-                {
-                    return false;
-                }
+                return EditorGUI.GetPropertyHeight(property, label, true);
             }
             
-            return true;
+            return -EditorGUIUtility.standardVerticalSpacing;
         }
     }
 }
