@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -370,8 +371,27 @@ namespace MornEditor
                     {
                         var objectToAdd = draggedObject;
                         
+                        // Sprite配列にTexture2Dをドラッグする特殊ケース
+                        if (elementType == typeof(Sprite) && draggedObject is Texture2D texture)
+                        {
+                            var path = AssetDatabase.GetAssetPath(texture);
+                            // Texture2DからSpriteを取得
+                            var sprites = AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().ToArray();
+                            if (sprites.Length > 0)
+                            {
+                                // 複数のSpriteがある場合（マルチスプライト）、すべて追加
+                                foreach (var sprite in sprites)
+                                {
+                                    var index = arrayProperty.arraySize;
+                                    arrayProperty.InsertArrayElementAtIndex(index);
+                                    var element = arrayProperty.GetArrayElementAtIndex(index);
+                                    element.objectReferenceValue = sprite;
+                                }
+                                continue;
+                            }
+                        }
                         // GameObject がドラッグされていて、Component型の配列の場合
-                        if (elementType != null && 
+                        else if (elementType != null && 
                             typeof(Component).IsAssignableFrom(elementType) && 
                             draggedObject is GameObject gameObject)
                         {
@@ -382,10 +402,14 @@ namespace MornEditor
                             }
                         }
                         
-                        var index = arrayProperty.arraySize;
-                        arrayProperty.InsertArrayElementAtIndex(index);
-                        var element = arrayProperty.GetArrayElementAtIndex(index);
-                        element.objectReferenceValue = objectToAdd;
+                        // 通常のケース
+                        if (elementType == null || elementType.IsAssignableFrom(objectToAdd.GetType()))
+                        {
+                            var index = arrayProperty.arraySize;
+                            arrayProperty.InsertArrayElementAtIndex(index);
+                            var element = arrayProperty.GetArrayElementAtIndex(index);
+                            element.objectReferenceValue = objectToAdd;
+                        }
                     }
                 }
                 
@@ -438,10 +462,26 @@ namespace MornEditor
                     // 型の互換性をチェック
                     if (!elementType.IsAssignableFrom(obj.GetType()))
                     {
-                        // Componentの派生型の場合、GameObjectからGetComponentで取得可能かチェック
-                        if (typeof(Component).IsAssignableFrom(elementType) && obj is GameObject gameObject)
+                        // Sprite配列にTexture2Dをドラッグする特殊ケース
+                        if (elementType == typeof(Sprite) && obj is Texture2D texture)
                         {
-                            if (gameObject.GetComponent(elementType) == null)
+                            // TextureImporterでSpriteモードかチェック
+                            var path = AssetDatabase.GetAssetPath(texture);
+                            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                            if (importer != null && importer.textureType == TextureImporterType.Sprite)
+                            {
+                                continue;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                        // Componentの派生型の場合、GameObjectからGetComponentで取得可能かチェック
+                        else if (typeof(Component).IsAssignableFrom(elementType) && obj is GameObject gameObject)
+                        {
+                            var component = gameObject.GetComponent(elementType);
+                            if (component == null)
                             {
                                 return false;
                             }
