@@ -167,9 +167,10 @@ namespace MornEditor
                 var hideIfAttribute = fieldInfo.GetCustomAttribute<HideIfAttribute>();
                 var enableIfAttribute = fieldInfo.GetCustomAttribute<EnableIfAttribute>();
                 var disableIfAttribute = fieldInfo.GetCustomAttribute<DisableIfAttribute>();
+                var readOnlyAttribute = fieldInfo.GetCustomAttribute<ReadOnlyAttribute>();
                 
                 // 処理中のAttributeとして登録
-                RegisterAttributes(processingAttributes, showIfAttribute, hideIfAttribute, enableIfAttribute, disableIfAttribute);
+                RegisterAttributes(processingAttributes, showIfAttribute, hideIfAttribute, enableIfAttribute, disableIfAttribute, readOnlyAttribute);
                 
                 try
                 {
@@ -179,9 +180,16 @@ namespace MornEditor
                         return;
                     }
                     
-                    // 有効/無効の判定と描画
-                    var isEnabled = AttributeProcessor.CheckEnabled(fieldInfo, property);
-                    using (new EditorGUI.DisabledScope(!isEnabled))
+                    // ReadOnlyAttributeまたは無効状態の判定
+                    var hasReadOnly = readOnlyAttribute != null;
+                    var isEnabled = !hasReadOnly && AttributeProcessor.CheckEnabled(fieldInfo, property);
+                    
+                    if (!isEnabled)
+                    {
+                        // 無効化された描画（配列の+-ボタン非表示を含む）
+                        MornEditorDrawerUtil.DrawDisabledPropertyLayout(property);
+                    }
+                    else
                     {
                         DrawPropertyWithDragAndDrop(property);
                     }
@@ -189,7 +197,7 @@ namespace MornEditor
                 finally
                 {
                     // 処理が終わったらAttributeを削除
-                    UnregisterAttributes(processingAttributes, showIfAttribute, hideIfAttribute, enableIfAttribute, disableIfAttribute);
+                    UnregisterAttributes(processingAttributes, showIfAttribute, hideIfAttribute, enableIfAttribute, disableIfAttribute, readOnlyAttribute);
                 }
             }
 
