@@ -21,7 +21,11 @@ namespace MornEditor
             
             var shouldDisable = MornEditorUtil.EvaluateDisableIfCondition(disableIfAttribute, property);
             
-            using (new EditorGUI.DisabledScope(shouldDisable))
+            if (shouldDisable)
+            {
+                MornEditorDrawerUtil.DrawDisabledProperty(position, property, label);
+            }
+            else
             {
                 EditorGUI.PropertyField(position, property, label, true);
             }
@@ -29,6 +33,21 @@ namespace MornEditor
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            var disableIfAttribute = (DisableIfAttribute)attribute;
+            
+            // MornEditorUtilで処理中の場合は通常の高さを返す
+            if (MornEditorUtil.IsProcessingAttribute(disableIfAttribute))
+            {
+                return EditorGUI.GetPropertyHeight(property, label, true);
+            }
+            
+            var shouldDisable = MornEditorUtil.EvaluateDisableIfCondition(disableIfAttribute, property);
+            
+            if (shouldDisable)
+            {
+                return MornEditorDrawerUtil.GetDisabledPropertyHeight(property, label);
+            }
+            
             return EditorGUI.GetPropertyHeight(property, label, true);
         }
     }
