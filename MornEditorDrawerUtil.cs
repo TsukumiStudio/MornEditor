@@ -1,13 +1,16 @@
 using System.Collections.Generic;
+using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
-using UnityEngine;
+#endif
 
 namespace MornEditor
 {
     /// <summary>Drawer共通処理のユーティリティクラス</summary>
     public static class MornEditorDrawerUtil
     {
+#if UNITY_EDITOR
         private static readonly Dictionary<string, ReorderableList> s_reorderableLists = new();
 
         /// <summary>無効化された状態でプロパティを描画</summary>
@@ -109,5 +112,6 @@ namespace MornEditor
             var rect = EditorGUILayout.GetControlRect(true, height);
             DrawDisabledProperty(rect, property, label, includeChildren);
         }
+#endif
     }
 }
