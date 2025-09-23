@@ -8,7 +8,7 @@ namespace MornEditor
     {
         public override void OnInspectorGUI()
         {
-            MornEditorUtil.OnInspectorGUI(target, serializedObject);
+            MornEditorDrawerUtil.OnInspectorGUI(target, serializedObject);
         }
     }
 }

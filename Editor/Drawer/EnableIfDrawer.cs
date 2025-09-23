@@ -13,13 +13,13 @@ namespace MornEditor
             var enableIfAttribute = (EnableIfAttribute)attribute;
             
             // MornEditorUtilで処理中の場合はPropertyDrawerでは処理しない
-            if (MornEditorUtil.IsProcessingAttribute(enableIfAttribute))
+            if (MornEditorDrawerUtil.IsProcessingAttribute(enableIfAttribute))
             {
                 EditorGUI.PropertyField(position, property, label, true);
                 return;
             }
             
-            var isEnabled = MornEditorUtil.EvaluateEnableIfCondition(enableIfAttribute, property);
+            var isEnabled = MornEditorDrawerUtil.EvaluateEnableIfCondition(enableIfAttribute, property);
             
             if (!isEnabled)
             {
@@ -36,12 +36,12 @@ namespace MornEditor
             var enableIfAttribute = (EnableIfAttribute)attribute;
             
             // MornEditorUtilで処理中の場合は通常の高さを返す
-            if (MornEditorUtil.IsProcessingAttribute(enableIfAttribute))
+            if (MornEditorDrawerUtil.IsProcessingAttribute(enableIfAttribute))
             {
                 return EditorGUI.GetPropertyHeight(property, label, true);
             }
             
-            var isEnabled = MornEditorUtil.EvaluateEnableIfCondition(enableIfAttribute, property);
+            var isEnabled = MornEditorDrawerUtil.EvaluateEnableIfCondition(enableIfAttribute, property);
             
             if (!isEnabled)
             {
