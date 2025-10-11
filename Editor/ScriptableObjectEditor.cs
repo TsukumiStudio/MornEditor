@@ -1,3 +1,4 @@
+#if USE_MORNEDITOR_INSPECTOR
 using UnityEditor;
 using UnityEngine;
 
@@ -12,3 +13,4 @@ namespace MornEditor
         }
     }
 }
+#endif
