@@ -1,3 +1,4 @@
+#if USE_ARBOR
 using UnityEngine;
 using UnityEditor;
 using ArborEditor;
@@ -54,3 +55,4 @@ namespace MornEditor
         }
     }
 }
+#endif
