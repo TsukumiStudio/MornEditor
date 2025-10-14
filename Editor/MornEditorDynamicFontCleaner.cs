@@ -22,7 +22,7 @@ namespace MornEditor
                     if (tmpFontAsset != null && tmpFontAsset.atlasPopulationMode == AtlasPopulationMode.Dynamic)
                     {
                         tmpFontAsset.ClearFontAssetData();
-                        MornEditorGlobal.Log($"ClearFontAssetData\"{tmpFontAsset.name}\"");
+                        MornEditorLogger.Log($"ClearFontAssetData\"{tmpFontAsset.name}\"");
                     }
                 }
             }
