@@ -1,4 +1,4 @@
-#if USE_ARBOR
+#if UNITY_EDITOR
 using UnityEngine;
 using UnityEditor;
 using ArborEditor;
