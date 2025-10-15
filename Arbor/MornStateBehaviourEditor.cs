@@ -1,4 +1,4 @@
-#if USE_MORNEDITOR_INSPECTOR
+#if USE_MORNEDITOR_INSPECTOR && UNITY_EDITOR
 using Arbor;
 using UnityEditor;
 
