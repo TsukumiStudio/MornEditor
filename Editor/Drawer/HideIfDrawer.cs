@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     [CustomPropertyDrawer(typeof(HideIfAttribute))]
     public class HideIfDrawer : PropertyDrawer

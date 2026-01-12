@@ -1,4 +1,4 @@
-﻿namespace MornEditor
+﻿namespace MornLib
 {
     public enum HelpBoxType
     {

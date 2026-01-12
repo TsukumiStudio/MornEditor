@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     public static class MornEditorInternalExtension
     {

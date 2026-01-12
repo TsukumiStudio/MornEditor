@@ -4,7 +4,7 @@ using UnityEditor;
 using ArborEditor;
 using Arbor;
 
-namespace MornEditor
+namespace MornLib
 {
     [InitializeOnLoad]
     internal static class ArborEditorWindowExtension

@@ -2,7 +2,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     [CustomPropertyDrawer(typeof(ViewableSearchAttribute))]
     public sealed class ViewableSearchDrawer : PropertyDrawer

@@ -5,7 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     public sealed class ViewableSearchWindow : EditorWindow
     {

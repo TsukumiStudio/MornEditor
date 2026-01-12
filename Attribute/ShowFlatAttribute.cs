@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     public sealed class ShowFlatAttribute : PropertyAttribute
     {

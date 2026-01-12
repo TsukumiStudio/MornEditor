@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     [CustomEditor(typeof(MonoBehaviour), true)] // すべてのMonoBehaviourに適用
     internal sealed class MonoBehaviourEditor : Editor

@@ -2,7 +2,7 @@
 using Arbor;
 using UnityEditor;
 
-namespace MornEditor
+namespace MornLib
 {
     [CustomEditor(typeof(StateBehaviour), true)] // すべてのStateBehaviourに適用
     internal sealed class StateBehaviourEditor : Editor
