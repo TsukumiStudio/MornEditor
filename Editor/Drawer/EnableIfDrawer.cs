@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     /// <summary>EnableIfAttributeのPropertyDrawer（MonoBehaviour/ScriptableObject以外で使用）</summary>
     [CustomPropertyDrawer(typeof(EnableIfAttribute))]

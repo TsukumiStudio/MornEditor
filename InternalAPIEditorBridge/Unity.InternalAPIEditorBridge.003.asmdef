@@ -1,6 +1,6 @@
 {
     "name": "Unity.InternalAPIEditorBridge.003",
-    "rootNamespace": "",
+    "rootNamespace": "MornLib",
     "references": [],
     "includePlatforms": [
         "Editor"

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     public static class MornGUILayout
     {

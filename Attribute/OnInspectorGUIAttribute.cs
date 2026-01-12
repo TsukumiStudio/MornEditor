@@ -1,6 +1,6 @@
 using System;
 
-namespace MornEditor
+namespace MornLib
 {
     public sealed class OnInspectorGUIAttribute : Attribute
     {

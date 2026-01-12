@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     [CustomPropertyDrawer(typeof(TexturePreviewAttribute))]
     internal sealed class TexturePreviewDrawer : PropertyDrawer

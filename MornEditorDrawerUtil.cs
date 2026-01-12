@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEditorInternal;
 #endif
 
-namespace MornEditor
+namespace MornLib
 {
     /// <summary>Drawer共通処理のユーティリティクラス</summary>
     public static class MornEditorDrawerUtil

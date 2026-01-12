@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     [CustomPropertyDrawer(typeof(ShowFlatAttribute))]
     internal sealed class ShowFlatDrawer : PropertyDrawer

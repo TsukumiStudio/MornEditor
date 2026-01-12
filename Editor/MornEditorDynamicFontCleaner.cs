@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     [InitializeOnLoad]
     public static class MornEditorDynamicFontCleaner

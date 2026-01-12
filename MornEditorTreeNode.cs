@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace MornEditor
+namespace MornLib
 {
     public abstract class MornEditorTreeBase<T> where T : new()
     {
