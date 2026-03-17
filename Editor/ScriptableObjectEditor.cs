@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace MornLib
 {
-    [CustomEditor(typeof(ScriptableObject), true)] // すべてのMonoBehaviourに適用
+    [CustomEditor(typeof(ScriptableObject), true)]
+    [CanEditMultipleObjects]
     internal sealed class ScriptableObjectEditor : Editor
     {
         public override void OnInspectorGUI()
