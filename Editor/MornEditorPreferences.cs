@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -41,24 +42,34 @@ namespace MornLib
                 _buildTarget = BuildTargetGroup.Unknown;
             }
 
-            private void CacheDefines()
+            private string GetDefines(BuildTargetGroup group)
             {
 #if UNITY_2023_1_OR_NEWER
-                var namedBuildTarget = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(_buildTarget);
-                _oldDefines = _defines = PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
+                var namedBuildTarget = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(group);
+                return PlayerSettings.GetScriptingDefineSymbols(namedBuildTarget);
 #else
-                _oldDefines = _defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(_buildTarget);
+                return PlayerSettings.GetScriptingDefineSymbolsForGroup(group);
 #endif
+            }
+
+            private void SetDefines(BuildTargetGroup group, string defines)
+            {
+#if UNITY_2023_1_OR_NEWER
+                var namedBuildTarget = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(group);
+                PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, defines);
+#else
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(group, defines);
+#endif
+            }
+
+            private void CacheDefines()
+            {
+                _oldDefines = _defines = GetDefines(_buildTarget);
             }
 
             private void ApplyDefines()
             {
-#if UNITY_2023_1_OR_NEWER
-                var namedBuildTarget = UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(_buildTarget);
-                PlayerSettings.SetScriptingDefineSymbols(namedBuildTarget, _defines);
-#else
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(_buildTarget, _defines);
-#endif
+                SetDefines(_buildTarget, _defines);
                 CacheDefines();
             }
 
@@ -82,6 +93,51 @@ namespace MornLib
                 bool current = HasDefine(define);
                 bool old = _oldDefines.IndexOf(define) >= 0;
                 return current != old;
+            }
+
+            private static string AddDefineToString(string defines, string define)
+            {
+                if (defines.IndexOf(define) >= 0) return defines;
+                return (defines + ";" + define + ";").Replace(";;", ";");
+            }
+
+            private static string RemoveDefineFromString(string defines, string define)
+            {
+                return defines.Replace(define, "").Replace(";;", ";");
+            }
+
+            private void ApplyToAllPlatforms(string define, bool enable)
+            {
+                foreach (BuildTargetGroup group in Enum.GetValues(typeof(BuildTargetGroup)))
+                {
+                    if (group == BuildTargetGroup.Unknown) continue;
+                    if (IsObsolete(group)) continue;
+
+                    try
+                    {
+                        var current = GetDefines(group);
+                        var updated = enable
+                            ? AddDefineToString(current, define)
+                            : RemoveDefineFromString(current, define);
+                        if (current != updated)
+                        {
+                            SetDefines(group, updated);
+                        }
+                    }
+                    catch
+                    {
+                        // サポートされていないプラットフォームはスキップ
+                    }
+                }
+
+                CacheDefines();
+            }
+
+            private static bool IsObsolete(BuildTargetGroup group)
+            {
+                var field = typeof(BuildTargetGroup).GetField(group.ToString());
+                if (field == null) return true;
+                return Attribute.IsDefined(field, typeof(ObsoleteAttribute));
             }
 
             public override void OnTitleBarGUI()
@@ -109,6 +165,22 @@ namespace MornLib
                     + "変更を適用するには、「Apply Changes」ボタンをクリックしてください。",
                     MessageType.Info);
                 EditorGUILayout.Space();
+
+                // 全プラットフォーム一括ボタン
+                EditorGUILayout.LabelField("全プラットフォーム一括", EditorStyles.boldLabel);
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("全プラットフォームに有効化"))
+                    {
+                        ApplyToAllPlatforms(DEFINE_USE_MORNEDITOR_INSPECTOR, true);
+                    }
+                    if (GUILayout.Button("全プラットフォームから無効化"))
+                    {
+                        ApplyToAllPlatforms(DEFINE_USE_MORNEDITOR_INSPECTOR, false);
+                    }
+                }
+                EditorGUILayout.Space();
+
                 var activeBuildTarget = BuildPipeline.GetBuildTargetGroup(EditorUserBuildSettings.activeBuildTarget);
                 EditorGUILayout.LabelField($"現在のアクティブなプラットフォーム: {activeBuildTarget}", EditorStyles.helpBox);
                 EditorGUILayout.Space();
