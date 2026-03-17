@@ -5,6 +5,7 @@ using UnityEngine;
 namespace MornLib
 {
     [CustomEditor(typeof(MonoBehaviour), true)] // すべてのMonoBehaviourに適用
+    [CanEditMultipleObjects]
     internal sealed class MonoBehaviourEditor : Editor
     {
         public override void OnInspectorGUI()
