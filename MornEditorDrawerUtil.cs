@@ -196,10 +196,13 @@ namespace MornLib
                     var buttonName = string.IsNullOrEmpty(buttonAttribute.Name) ? method.Name : buttonAttribute.Name;
                     if (GUILayout.Button(buttonName))
                     {
-                        method.Invoke(target, null);
+                        // 複数選択時は全ターゲットに対して実行
+                        foreach (var t in serializedObject.targetObjects)
+                        {
+                            method.Invoke(t, null);
+                            EditorUtility.SetDirty(t);
+                        }
                         needsRepaint = true;
-                        // ボタン実行後は即座に変更を反映
-                        EditorUtility.SetDirty(target);
                         serializedObject.Update();
                         serializedObject.ApplyModifiedProperties();
                     }
