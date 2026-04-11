@@ -22,23 +22,38 @@ https://github.com/TsukumiStudio/MornEditor.git?path=src#1.0.0
 
 `Window > Package Manager > + > Add package from git URL...` に貼り付けてください。
 
+### 依存パッケージ
+
+- [Arbor](https://arbor.caitsithware.com/) (オプション: `USE_ARBOR` 定義時のみ有効)
+
 ## 機能
+
+| カテゴリ | 主な属性 / 機能 | 用途 |
+|----------|----------------|------|
+| 表示制御 | `[ReadOnly]` `[ShowIf]` `[HideIf]` `[EnableIf]` `[DisableIf]` | フィールドの表示・有効化を条件で制御 |
+| 入力 UI | `[MinMaxSlider]` `[Label]` `[HelpBox]` | Inspector の入力 UI をカスタマイズ |
+| プレビュー | `[TexturePreview]` `[SpritePreview]` `[ViewableSearch]` | アセット参照を視覚的に表示・検索 |
+| ボタン | `[Button]` | メソッドを Inspector からワンクリック実行 |
+| 共通エディタ | `MonoBehaviourEditor` / `ScriptableObjectEditor` | 全対象に対する `[CanEditMultipleObjects]` / `[Button]` 一括実行 |
+| Arbor 連携 | `MornStateBehaviourEditor` 等 | Arbor State の Inspector 拡張 (`USE_ARBOR` 時のみ) |
+
+## 使い方
 
 ### 表示制御
 
 ```csharp
-[ReadOnly] public int level;                          // 読み取り専用フィールド
-[ShowIf(nameof(isActive))] public string activeName;  // 条件付き表示
-[HideIf(nameof(isDebug))] public float normalValue;   // 条件付き非表示
-[EnableIf(nameof(canEdit))] public int editableValue; // 条件付き有効化
+[ReadOnly] public int level;                            // 読み取り専用
+[ShowIf(nameof(isActive))] public string activeName;    // 条件付き表示
+[HideIf(nameof(isDebug))] public float normalValue;     // 条件付き非表示
+[EnableIf(nameof(canEdit))] public int editableValue;   // 条件付き有効化
 [DisableIf(nameof(isLocked))] public string lockedText; // 条件付き無効化
 ```
 
 ### 入力 UI
 
 ```csharp
-[MinMaxSlider(0f, 100f)] public Vector2 hpRange;     // Min-Max スライダー
-[Label("Health Points")] public int hp;               // ラベルカスタマイズ
+[MinMaxSlider(0f, 100f)] public Vector2 hpRange;
+[Label("Health Points")] public int hp;
 [HelpBox("重要な設定項目です", HelpBoxType.Info)] public string important;
 ```
 
@@ -58,17 +73,6 @@ public void ResetValues() { /* ... */ }
 ```
 
 `MonoBehaviour` / `ScriptableObject` の Inspector に「リセット」ボタンが表示される。複数選択時は全ての対象オブジェクトに対して実行される。
-
-### Arbor 連携 (オプション)
-
-`USE_ARBOR` 定義時のみ有効。`MornStateBehaviourEditor` / `ArborEditorWindowExtension` 等の Arbor State 拡張を提供する。
-
-## 依存関係
-
-| 種別 | 名前 |
-|------|------|
-| 外部パッケージ | [Arbor](https://arbor.caitsithware.com/) (オプション: `USE_ARBOR` 定義時のみ) |
-| Morn ライブラリ | なし |
 
 ## ライセンス
 
