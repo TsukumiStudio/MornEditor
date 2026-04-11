@@ -38,6 +38,7 @@
 *.pidb.meta
 *.pdb.meta
 *.mdb.meta
+src.meta
 
 *.apk
 *.aab
