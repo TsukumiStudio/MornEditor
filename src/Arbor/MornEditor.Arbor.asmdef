@@ -1,7 +1,11 @@
 {
-    "name": "MornEditor",
-    "rootNamespace": "MornEditor",
-    "references": [],
+    "name": "MornEditor.Arbor",
+    "rootNamespace": "MornLib",
+    "references": [
+        "GUID:520891f70526d454fa74c098f96aaedd",
+        "GUID:e623bc35d2e040d4d81ac786178e2a6a",
+        "GUID:62b173574c39a5242bd582a3b2d956fa"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

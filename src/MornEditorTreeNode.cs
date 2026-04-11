@@ -41,7 +41,6 @@ namespace MornLib
                 var path = _tree.NodeToPath(target);
                 if (!string.IsNullOrEmpty(_originalPath) && !path.StartsWith(_originalPath))
                 {
-                    MornEditorLogger.LogWarning($"パス[{path}]は、指定したパス[{_originalPath}]で始まっていません。");
                     return;
                 }
                 var pathFromPrefix = path.Substring(_originalPath.Length);
