@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace MornLib
 {
-    [CustomPropertyDrawer(typeof(NoElementLabelAttribute))]
-    internal sealed class NoElementLabelDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(NoLabelAttribute))]
+    internal sealed class NoLabelDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
