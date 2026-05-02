@@ -218,6 +218,41 @@ namespace MornLib
             }
         }
 
+        /// <summary>UnityEngine.Object ではない任意のインスタンスに対して [Button]/[OnInspectorGUI] を IMGUI 内で描画する。
+        /// undoTarget は Undo/SetDirty 対象のシリアライズ owner。null の場合は Undo/Dirty なしで実行のみ。</summary>
+        public static void HandleCustomAttributesForObject(object target, Object undoTarget)
+        {
+            if (target == null) return;
+            var needsRepaint = false;
+            var methods = target.GetType().GetMethods(
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
+            foreach (var method in methods)
+            {
+                if (method.GetParameters().Length != 0) continue;
+                var buttonAttribute = method.GetCustomAttribute<ButtonAttribute>();
+                if (buttonAttribute != null)
+                {
+                    var buttonName = string.IsNullOrEmpty(buttonAttribute.Name) ? method.Name : buttonAttribute.Name;
+                    if (GUILayout.Button(buttonName))
+                    {
+                        if (undoTarget != null) Undo.RegisterCompleteObjectUndo(undoTarget, $"Button: {buttonName}");
+                        InvokeSafe(method, target);
+                        if (undoTarget != null) EditorUtility.SetDirty(undoTarget);
+                        needsRepaint = true;
+                    }
+                }
+                var onInspectorGUIAttribute = method.GetCustomAttribute<OnInspectorGUIAttribute>();
+                if (onInspectorGUIAttribute != null)
+                {
+                    InvokeSafe(method, target);
+                }
+            }
+            if (needsRepaint)
+            {
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            }
+        }
+
         private static void HandleCustomAttributes(Object target, SerializedObject serializedObject)
         {
             var needsRepaint = false;
