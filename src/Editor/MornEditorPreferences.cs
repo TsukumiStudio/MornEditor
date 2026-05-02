@@ -97,7 +97,11 @@ namespace MornLib
 
             private static string AddDefineToString(string defines, string define)
             {
-                if (defines.IndexOf(define) >= 0) return defines;
+                if (defines.IndexOf(define) >= 0)
+                {
+                    return defines;
+                }
+
                 return (defines + ";" + define + ";").Replace(";;", ";");
             }
 
@@ -110,8 +114,15 @@ namespace MornLib
             {
                 foreach (BuildTargetGroup group in Enum.GetValues(typeof(BuildTargetGroup)))
                 {
-                    if (group == BuildTargetGroup.Unknown) continue;
-                    if (IsObsolete(group)) continue;
+                    if (group == BuildTargetGroup.Unknown)
+                    {
+                        continue;
+                    }
+
+                    if (IsObsolete(group))
+                    {
+                        continue;
+                    }
 
                     try
                     {
@@ -136,7 +147,11 @@ namespace MornLib
             private static bool IsObsolete(BuildTargetGroup group)
             {
                 var field = typeof(BuildTargetGroup).GetField(group.ToString());
-                if (field == null) return true;
+                if (field == null)
+                {
+                    return true;
+                }
+
                 return Attribute.IsDefined(field, typeof(ObsoleteAttribute));
             }
 

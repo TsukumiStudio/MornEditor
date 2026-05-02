@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MornLib
 {
     [CustomPropertyDrawer(typeof(HideIfAttribute))]
-    public class HideIfDrawer : PropertyDrawer
+    public sealed class HideIfDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {

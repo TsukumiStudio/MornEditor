@@ -17,9 +17,9 @@ namespace MornLib
             private readonly string _folderName;
             private readonly Dictionary<string, MornEditorNode> _childNodes = new();
             private readonly List<T> _childList = new();
-            private bool IsRoot => _parentNode == null;
             private bool _isFoldout;
             private int _indent;
+            private bool IsRoot => _parentNode == null;
             private int TotalIndent => _parentNode?.TotalIndent + _indent ?? _indent;
 
             public MornEditorNode(MornEditorTreeBase<T> tree, MornEditorNode parent, string originalPath)

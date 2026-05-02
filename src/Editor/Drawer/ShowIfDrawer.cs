@@ -5,7 +5,7 @@ using UnityEngine;
 namespace MornLib
 {
     [CustomPropertyDrawer(typeof(ShowIfAttribute))]
-    public class ShowIfDrawer : PropertyDrawer
+    public sealed class ShowIfDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {

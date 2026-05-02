@@ -6,7 +6,7 @@ namespace MornLib
 {
     /// <summary>EnableIfAttributeのPropertyDrawer（MonoBehaviour/ScriptableObject以外で使用）</summary>
     [CustomPropertyDrawer(typeof(EnableIfAttribute))]
-    public class EnableIfDrawer : PropertyDrawer
+    public sealed class EnableIfDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {

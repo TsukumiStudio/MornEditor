@@ -13,93 +13,39 @@ namespace MornLib
     public static class MornEditorDrawerUtil
     {
 #if UNITY_EDITOR
-        private static readonly Dictionary<string, ReorderableList> s_reorderableLists = new();
+        private static readonly Dictionary<string, ReorderableList> _reorderableLists = new();
+        private const float ElementVerticalPadding = 4f;
+        private const float ElementTopOffset = 2f;
+        private const float PingButtonWidth = 60f;
 
         /// <summary>無効化された状態でプロパティを描画</summary>
         public static void DrawDisabledProperty(Rect position, SerializedProperty property, GUIContent label,
             bool includeChildren = true)
         {
-            // 現在のGUI.enabledの状態を保存
-            var cachedEnabled = GUI.enabled;
-            if (property.isArray && property.propertyType != SerializedPropertyType.String)
+            if (IsDrawableArray(property))
             {
-                DrawDisabledArrayProperty(position, property, label, cachedEnabled);
+                GetOrCreateDisabledList(property, label).DoList(position);
+                return;
             }
-            else
+
+            var cachedEnabled = GUI.enabled;
+            try
             {
                 GUI.enabled = false;
                 EditorGUI.PropertyField(position, property, label, includeChildren);
+            }
+            finally
+            {
                 GUI.enabled = cachedEnabled;
             }
-        }
-
-        /// <summary>無効化された配列プロパティを描画（+-ボタンなし）</summary>
-        private static void DrawDisabledArrayProperty(Rect position, SerializedProperty property, GUIContent label,
-            bool cachedEnabled)
-        {
-            var key = $"disabled_{property.propertyPath}";
-            if (s_reorderableLists.TryGetValue(key, out var list))
-            {
-                // SerializedObjectがDisposedされていないかチェック
-                try
-                {
-                    // serializedObjectにアクセスして、Disposedされていないか確認
-                    var _ = list.serializedProperty.serializedObject.targetObject;
-                }
-                catch
-                {
-                    // Disposedされていた場合はキャッシュから削除して再作成
-                    s_reorderableLists.Remove(key);
-                    list = null;
-                }
-            }
-
-            if (list == null)
-            {
-                list = new ReorderableList(property.serializedObject, property, false, true, false, false)
-                {
-                    drawHeaderCallback = rect => EditorGUI.LabelField(rect, label),
-                    drawElementCallback = (rect, index, isActive, isFocused) =>
-                    {
-                        var element = property.GetArrayElementAtIndex(index);
-                        rect.y += 2;
-                        GUI.enabled = false;
-                        EditorGUI.PropertyField(rect, element, GUIContent.none, true);
-                        GUI.enabled = cachedEnabled;
-                    },
-                    elementHeightCallback = index =>
-                    {
-                        var element = property.GetArrayElementAtIndex(index);
-                        return EditorGUI.GetPropertyHeight(element, GUIContent.none, true) + 4;
-                    }
-                };
-                s_reorderableLists[key] = list;
-            }
-
-            list.DoList(position);
         }
 
         /// <summary>無効化された状態でのプロパティの高さを取得</summary>
         public static float GetDisabledPropertyHeight(SerializedProperty property, GUIContent label)
         {
-            if (property.isArray && property.propertyType != SerializedPropertyType.String)
+            if (IsDrawableArray(property))
             {
-                var key = $"disabled_{property.propertyPath}";
-                if (s_reorderableLists.TryGetValue(key, out var list))
-                {
-                    // SerializedObjectがDisposedされていないかチェック
-                    try
-                    {
-                        // serializedObjectにアクセスして、Disposedされていないか確認
-                        var _ = list.serializedProperty.serializedObject.targetObject;
-                        return list.GetHeight();
-                    }
-                    catch
-                    {
-                        // Disposedされていた場合はキャッシュから削除
-                        s_reorderableLists.Remove(key);
-                    }
-                }
+                return GetOrCreateDisabledList(property, label).GetHeight();
             }
 
             return EditorGUI.GetPropertyHeight(property, label, true);
@@ -109,20 +55,88 @@ namespace MornLib
         public static void DrawDisabledPropertyLayout(SerializedProperty property, GUIContent label = null,
             bool includeChildren = true)
         {
-            label = label ?? new GUIContent(property.displayName);
+            label ??= new GUIContent(property.displayName);
             var height = GetDisabledPropertyHeight(property, label);
             var rect = EditorGUILayout.GetControlRect(true, height);
             DrawDisabledProperty(rect, property, label, includeChildren);
         }
-#endif
-        #if UNITY_EDITOR
+
+        private static bool IsDrawableArray(SerializedProperty property)
+        {
+            return property.isArray && property.propertyType != SerializedPropertyType.String;
+        }
+
+        /// <summary>無効化された配列描画用の ReorderableList を取得 or 生成。
+        /// callback は property.Copy() をクロージャで保持し、外部 iterator の進行に影響されない。</summary>
+        private static ReorderableList GetOrCreateDisabledList(SerializedProperty property, GUIContent label)
+        {
+            var key = $"disabled_{property.propertyPath}";
+            if (_reorderableLists.TryGetValue(key, out var cached) && IsAlive(cached))
+            {
+                return cached;
+            }
+
+            _reorderableLists.Remove(key);
+
+            var propCopy = property.Copy();
+            var list = new ReorderableList(property.serializedObject, propCopy, false, true, false, false)
+            {
+                drawHeaderCallback = rect => EditorGUI.LabelField(rect, label),
+                drawElementCallback = (rect, index, _, _) =>
+                {
+                    if (index < 0 || index >= propCopy.arraySize)
+                    {
+                        return;
+                    }
+
+                    var element = propCopy.GetArrayElementAtIndex(index);
+                    rect.y += ElementTopOffset;
+                    var prev = GUI.enabled;
+                    try
+                    {
+                        GUI.enabled = false;
+                        EditorGUI.PropertyField(rect, element, GUIContent.none, true);
+                    }
+                    finally
+                    {
+                        GUI.enabled = prev;
+                    }
+                },
+                elementHeightCallback = index =>
+                {
+                    if (index < 0 || index >= propCopy.arraySize)
+                    {
+                        return EditorGUIUtility.singleLineHeight + ElementVerticalPadding;
+                    }
+
+                    var element = propCopy.GetArrayElementAtIndex(index);
+                    return EditorGUI.GetPropertyHeight(element, GUIContent.none, true) + ElementVerticalPadding;
+                }
+            };
+            _reorderableLists[key] = list;
+            return list;
+        }
+
+        private static bool IsAlive(ReorderableList list)
+        {
+            try
+            {
+                _ = list.serializedProperty.serializedObject.targetObject;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         /// <summary>現在MornEditorUtilで処理中のAttributeを保持（二重処理防止用）</summary>
-        private static readonly HashSet<object> ProcessingAttributes = new HashSet<object>();
+        private static readonly HashSet<object> _processingAttributes = new HashSet<object>();
 
         /// <summary>MornEditorUtilで処理中のAttributeかチェック</summary>
         public static bool IsProcessingAttribute(object attribute)
         {
-            return ProcessingAttributes.Contains(attribute);
+            return _processingAttributes.Contains(attribute);
         }
 
         /// <summary>プロパティを描画（配列の場合も含めて適切に処理）</summary>
@@ -155,7 +169,7 @@ namespace MornLib
             // プロパティの描画
             while (property.NextVisible(false))
             {
-                PropertyDrawer.DrawProperty(target, property, ProcessingAttributes);
+                PropertyDrawer.DrawProperty(target, property, _processingAttributes);
             }
 
             // GUI経由の変更を適用
@@ -173,19 +187,42 @@ namespace MornLib
             using (new GUILayout.HorizontalScope())
             {
                 var cachedEnabled = GUI.enabled;
-                GUI.enabled = false;
-                EditorGUILayout.PropertyField(property);
-                GUI.enabled = cachedEnabled;
-                if (GUILayout.Button("Ping", GUILayout.Width(60)))
+                try
+                {
+                    GUI.enabled = false;
+                    EditorGUILayout.PropertyField(property);
+                }
+                finally
+                {
+                    GUI.enabled = cachedEnabled;
+                }
+
+                if (GUILayout.Button("Ping", GUILayout.Width(PingButtonWidth)))
                 {
                     EditorGUIUtility.PingObject(target);
                 }
             }
         }
 
+        /// <summary>Editor GUI 中に呼ぶ Reflection invoke。
+        /// 呼び出し先の例外で Inspector 全体が停止しないよう Console に流して握り潰す。</summary>
+        private static void InvokeSafe(MethodInfo method, object target)
+        {
+            try
+            {
+                method.Invoke(target, null);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogException(ex.InnerException ?? ex);
+            }
+        }
+
         private static void HandleCustomAttributes(Object target, SerializedObject serializedObject)
         {
             var needsRepaint = false;
+            // Editor GUI 拡張のため Reflection で [Button] / [OnInspectorGUI] 属性付きメソッドを抽出。
+            // 呼び出し範囲は target インスタンスの直接メソッドのみで AOT 制約外。
             var methods = target.GetType().GetMethods(
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy);
             foreach (var method in methods)
@@ -196,12 +233,12 @@ namespace MornLib
                     var buttonName = string.IsNullOrEmpty(buttonAttribute.Name) ? method.Name : buttonAttribute.Name;
                     if (GUILayout.Button(buttonName))
                     {
-                        // 複数選択時は全ターゲットに対して実行
                         foreach (var t in serializedObject.targetObjects)
                         {
-                            method.Invoke(t, null);
+                            InvokeSafe(method, t);
                             EditorUtility.SetDirty(t);
                         }
+
                         needsRepaint = true;
                         serializedObject.Update();
                         serializedObject.ApplyModifiedProperties();
@@ -211,7 +248,7 @@ namespace MornLib
                 var onInspectorGUIAttribute = method.GetCustomAttribute<OnInspectorGUIAttribute>();
                 if (onInspectorGUIAttribute != null)
                 {
-                    method.Invoke(target, null);
+                    InvokeSafe(method, target);
                 }
             }
 
@@ -257,6 +294,8 @@ namespace MornLib
                 HashSet<object> processingAttributes)
             {
                 var targetType = target.GetType();
+                // SerializedProperty 名から FieldInfo を Reflection 解決して属性 ([ShowIf] 等) を取得する。
+                // ネスト構造体内のフィールドは name が衝突するためトップレベルの簡易解決のみ対応。
                 var fieldInfo = targetType.GetField(
                     property.name,
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
@@ -635,7 +674,8 @@ namespace MornLib
 
                 var targetType = actualObject.GetType();
 
-                // まずプロパティを探す
+                // ShowIf/HideIf/EnableIf/DisableIf の条件評価のため、属性で指定された名前を
+                // Reflection で解決する。Editor 専用のため AOT 制約は問題にならない。
                 var propertyInfo = targetType.GetProperty(
                     propertyName,
                     BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);

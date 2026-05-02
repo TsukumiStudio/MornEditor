@@ -14,11 +14,11 @@ namespace MornLib
         private List<ScriptableObject> _filteredObjects;
         private string _searchText;
         private Vector2 _scrollPos;
+        private float _imageSize;
         private const float MinSize = 30f;
         private const float MaxSize = 200f;
         private const float DefaultSize = 60f;
         private const string SizeKey = "ViewableSearchWindow.SizeKey";
-        private float _imageSize;
 
         public static void ShowWindow(SerializedProperty property, Type targetType)
         {
