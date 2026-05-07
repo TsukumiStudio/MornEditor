@@ -748,32 +748,45 @@ namespace MornLib
                 {
                     var part = pathParts[i];
 
-                    // Array要素の場合の処理
+                    // Array.data[N] の組を IList の N 番目要素として解決する
                     if (part == "Array" && i + 1 < pathParts.Length && pathParts[i + 1].StartsWith("data["))
                     {
-                        // Arrayの場合は次のdata[n]も含めて処理
-                        i++; // data[n]をスキップ
-                        continue;
-                    }
-
-                    // 現在のオブジェクトから次のフィールドを取得
-                    var type = currentObject.GetType();
-                    var field = type.GetField(
-                        part,
-                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                    if (field == null)
-                    {
+                        var dataPart = pathParts[i + 1];
+                        var lb = dataPart.IndexOf('[');
+                        var rb = dataPart.IndexOf(']');
+                        if (lb < 0 || rb <= lb) return null;
+                        if (!int.TryParse(dataPart.Substring(lb + 1, rb - lb - 1), out var idx)) return null;
+                        if (currentObject is System.Collections.IList list && idx < list.Count)
+                        {
+                            currentObject = list[idx];
+                            if (currentObject == null) return null;
+                            i++; // data[N] をスキップ
+                            continue;
+                        }
                         return null;
                     }
+
+                    // 現在のオブジェクトから次のフィールドを継承チェーンも含めて取得
+                    var field = FindFieldRecursive(currentObject.GetType(), part);
+                    if (field == null) return null;
 
                     currentObject = field.GetValue(currentObject);
-                    if (currentObject == null)
-                    {
-                        return null;
-                    }
+                    if (currentObject == null) return null;
                 }
 
                 return currentObject;
+            }
+
+            private static FieldInfo FindFieldRecursive(System.Type type, string name)
+            {
+                while (type != null)
+                {
+                    var f = type.GetField(name,
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                    if (f != null) return f;
+                    type = type.BaseType;
+                }
+                return null;
             }
 
             internal static System.Type GetArrayElementType(SerializedProperty arrayProperty)
